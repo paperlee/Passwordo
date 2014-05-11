@@ -1,12 +1,27 @@
 var Key = require("key");
-
+var fb = require('facebook');
 
 //Master View Component Constructor
 function MasterView() {
 	var key = new Key();
-	console.log('pageid: '+key.pageid);
-	console.log('appid: '+key.appid);
-	console.log('appsid: '+key.appsid);
+	
+	var xhr = Ti.Network.createHTTPClient();
+	xhr.onload = function(){
+		var TokenResponse = this.responseText;
+		var TokenArray = TokenResponse.split('=');
+		var token = TokenArray[1];
+		if (token != ''){
+			// TODO:Read public feed by using token
+			//Ti.API.log('token: '+token);
+			getFeed(token);
+		}
+	};
+	
+	xhr.open('GET','https://graph.facebook.com/oauth/access_token?client_id='+key.appid+'&client_secret='+key.appsid+'&grant_type=client_credentials');
+	xhr.send();
+	
+	
+	
 	//create object instance, parasitic subclass of Observable
 	var self = Ti.UI.createView({
 		backgroundColor:'white'
@@ -34,7 +49,21 @@ function MasterView() {
 			price:e.rowData.price
 		});
 	});
-
+	
+	function getFeed(token){
+		fb.requestWithGraphPath(''+key.pageid+'/feed',{access_token:token},'GET',function(e){
+			if (e.success){
+				Ti.API.log('Read FB page success: '+e.result);
+			} else {
+				if (e.error){
+					alert(e.error);
+				} else {
+					alert('Unknown error');
+				}
+			}
+		});
+	}
+	
 	return self;
 };
 
